@@ -9,20 +9,32 @@ use Illuminate\Http\Request;
 
 class AdminController extends Controller
 {
-    public function dashboard()
-    {
-        $totalAnnonces = Annonce::count();
-        $totalUsers = User::count();
-        $annoncesEnAttente = Annonce::where('statut', 'en_attente')->count();
-        $annoncesActives = Annonce::where('statut', 'active')->count();
+   public function dashboard()
+{
+    $totalAnnonces = Annonce::count();
+    $totalUsers = User::count();
+    $annoncesEnAttente = Annonce::where('statut', 'en_attente')->count();
+    $annoncesActives = Annonce::where('statut', 'active')->count();
+    $annoncesRejetees = Annonce::where('statut', 'rejetee')->count();
 
-        return view('admin.dashboard', compact(
-            'totalAnnonces',
-            'totalUsers',
-            'annoncesEnAttente',
-            'annoncesActives'
-        ));
-    }
+    $annoncesParCategorie = \App\Models\Categorie::withCount('annonces')->get();
+
+    $annoncesParMois = Annonce::selectRaw('MONTH(created_at) as mois, COUNT(*) as total')
+        ->whereYear('created_at', date('Y'))
+        ->groupBy('mois')
+        ->orderBy('mois')
+        ->get();
+
+    return view('admin.dashboard', compact(
+        'totalAnnonces',
+        'totalUsers',
+        'annoncesEnAttente',
+        'annoncesActives',
+        'annoncesRejetees',
+        'annoncesParCategorie',
+        'annoncesParMois'
+    ));
+}
 
     public function annonces()
     {

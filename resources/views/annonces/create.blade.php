@@ -61,9 +61,21 @@
 
                     <div class="mb-3">
                         <label class="form-label fw-bold">Description</label>
-                        <textarea name="description" rows="5"
+                        <div class="d-flex gap-2 mb-2">
+                            <button type="button" id="btn-generer"
+                                onclick="genererDescription()"
+                                class="btn btn-sm text-white"
+                                style="background:linear-gradient(135deg,#e94560,#c73652); border-radius:10px;">
+                                <i class="bi bi-robot"></i> Générer avec IA
+                            </button>
+                            <span id="loading-desc" class="text-muted d-none align-items-center gap-1 d-flex">
+                                <span class="spinner-border spinner-border-sm"></span>
+                                Génération en cours...
+                            </span>
+                        </div>
+                        <textarea name="description" id="description" rows="5"
                             class="form-control @error('description') is-invalid @enderror"
-                            placeholder="Description de l'annonce"
+                            placeholder="Description de l'annonce ou cliquez sur Générer avec IA"
                             maxlength="2000"
                             style="border-radius:10px;">{{ old('description') }}</textarea>
                         @error('description')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -97,4 +109,48 @@
         </div>
     </div>
 </div>
+
+<script>
+function genererDescription() {
+    const titre = document.querySelector('input[name="titre"]').value;
+    const categorieSelect = document.querySelector('select[name="categorie_id"]');
+    const categorie = categorieSelect.options[categorieSelect.selectedIndex].text;
+
+    if (!titre) {
+        alert('Veuillez d\'abord remplir le titre !');
+        return;
+    }
+
+    if (categorieSelect.value === '') {
+        alert('Veuillez d\'abord choisir une catégorie !');
+        return;
+    }
+
+    document.getElementById('btn-generer').disabled = true;
+    document.getElementById('loading-desc').classList.remove('d-none');
+
+    fetch('{{ route("ai.genererDescription") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({
+            titre: titre,
+            categorie: categorie
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById('description').value = data.description;
+        document.getElementById('btn-generer').disabled = false;
+        document.getElementById('loading-desc').classList.add('d-none');
+    })
+    .catch(() => {
+        alert('Erreur de génération, réessayez !');
+        document.getElementById('btn-generer').disabled = false;
+        document.getElementById('loading-desc').classList.add('d-none');
+    });
+}
+</script>
 @endsection

@@ -59,4 +59,33 @@ class AiController extends Controller
 
         return response()->json(['reponse' => $reponse]);
     }
+    public function genererDescription(Request $request)
+{
+    $titre = $request->titre;
+    $categorie = $request->categorie;
+
+    $response = Http::withHeaders([
+        'Authorization' => 'Bearer ' . env('GROQ_API_KEY'),
+        'Content-Type' => 'application/json',
+    ])->post('https://api.groq.com/openai/v1/chat/completions', [
+        'model' => 'llama-3.3-70b-versatile',
+        'messages' => [
+            [
+                'role' => 'system',
+                'content' => "Tu es un assistant spécialisé dans la rédaction d'annonces. Génère une description professionnelle, claire et attrayante en français. Maximum 3 phrases. Pas de titre, juste la description."
+            ],
+            [
+                'role' => 'user',
+                'content' => "Génère une description pour cette annonce : Titre: $titre, Catégorie: $categorie"
+            ]
+        ],
+        'max_tokens' => 300,
+    ]);
+
+    $data = $response->json();
+    $description = $data['choices'][0]['message']['content'] ?? 'Erreur de génération';
+
+    return response()->json(['description' => $description]);
+}
+    
 }
